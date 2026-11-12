@@ -12,7 +12,7 @@ jobs:
   stamp-readme:
     # The bot's own push to main re-triggers this workflow. Skip any run
     # triggered by a bot identity so the stamp never loops on itself.
-    if: !endsWith(github.actor, '[bot]')
+    if: "!endsWith(github.actor, '[bot]')"
     runs-on: ubuntu-latest
     steps:
       - name: Create GitHub App token
