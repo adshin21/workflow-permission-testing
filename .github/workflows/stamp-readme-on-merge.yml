@@ -1,0 +1,39 @@
+name: Stamp README on merge to main
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  stamp-readme:
+    # The bot's own push to main re-triggers this workflow. Skip any run
+    # triggered by a bot identity so the stamp never loops on itself.
+    if: !endsWith(github.actor, '[bot]')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ vars.README_BOT_APP_ID }}
+          private-key: ${{ secrets.README_BOT_PRIVATE_KEY }}
+
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          token: ${{ steps.app-token.outputs.token }}
+
+      - name: Append timestamp and push
+        run: |
+          printf '\nMerged to main: %s\n' "$(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> README.md
+
+          git config user.name "readme-stamper-bot[bot]"
+          git config user.email "${{ vars.README_BOT_APP_ID }}+readme-stamper-bot[bot]@users.noreply.github.com"
+          git add README.md
+          git commit -m "docs(readme): record merge to main"
+          git push origin HEAD:main
